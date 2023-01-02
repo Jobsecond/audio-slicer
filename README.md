@@ -67,7 +67,7 @@ where `audio` refers to the audio to be sliced, `--out` defaults to the same dir
 
 ### Using GUI
 
-Run the following command to start GUI:
+Run the following command to launch GUI:
 
 ```Shell
 python slicer-gui.py
