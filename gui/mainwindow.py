@@ -203,6 +203,8 @@ class MainWindow(QMainWindow):
             max_threads = QThread.idealThreadCount()
             self.ui.lineEditThreads.setText(str(max_threads))
 
+        self.threadpool.setMaxThreadCount(max_threads)
+
         for i in range(0, item_count):
             item = self.model.item(i)
             path = item.data(Qt.ItemDataRole.UserRole + 1)  # Get full path
@@ -223,7 +225,6 @@ class MainWindow(QMainWindow):
             #item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
             #worker.start()
 
-            self.threadpool.setMaxThreadCount(max_threads)
             self.threadpool.start(worker)
 
             #self.workers.append(worker)  # Collect in case of auto deletion
