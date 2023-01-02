@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_mainwindow.ui'
+## Form generated from reading UI file 'ui_MainWindow.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.4.1
 ##
@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFormLayout, QFrame, QGroupBox,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QProgressBar, QPushButton,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+    QHBoxLayout, QLabel, QLineEdit, QListView,
+    QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+    QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -63,11 +63,11 @@ class Ui_MainWindow(object):
         self.groupBox.setSizePolicy(sizePolicy1)
         self.verticalLayout_2 = QVBoxLayout(self.groupBox)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.listWidgetTaskList = QListWidget(self.groupBox)
-        self.listWidgetTaskList.setObjectName(u"listWidgetTaskList")
-        self.listWidgetTaskList.setFrameShadow(QFrame.Plain)
+        self.listViewTaskList = QListView(self.groupBox)
+        self.listViewTaskList.setObjectName(u"listViewTaskList")
+        self.listViewTaskList.setFrameShadow(QFrame.Plain)
 
-        self.verticalLayout_2.addWidget(self.listWidgetTaskList)
+        self.verticalLayout_2.addWidget(self.listViewTaskList)
 
         self.pushButtonClearList = QPushButton(self.groupBox)
         self.pushButtonClearList.setObjectName(u"pushButtonClearList")

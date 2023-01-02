@@ -68,7 +68,7 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QListWidget" name="listWidgetTaskList">
+          <widget class="QListView" name="listViewTaskList">
            <property name="frameShadow">
             <enum>QFrame::Plain</enum>
            </property>

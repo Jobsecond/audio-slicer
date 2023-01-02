@@ -19,15 +19,14 @@ class WorkStatus(enum.Enum):
     FINISHED = enum.auto()
     ERROR = enum.auto()
 
-    @staticmethod
-    def suffix(status):
-        return {
-            WorkStatus.NEW: "",
-            WorkStatus.PENDING: " (pending)",
-            WorkStatus.PROCESSING: " (processing)",
-            WorkStatus.FINISHED: " (finished)",
-            WorkStatus.ERROR: " (error)",
-        }.get(status, "")
+
+_work_status_string = {
+    WorkStatus.NEW: "",
+    WorkStatus.PENDING: " (pending)",
+    WorkStatus.PROCESSING: " (processing)",
+    WorkStatus.FINISHED: " (finished)",
+    WorkStatus.ERROR: " (error)",
+}
 
 
 class WorkerSignals(QObject):
@@ -109,7 +108,26 @@ class MainWindow(QMainWindow):
         self.workFinished = 0
         self.processing = False
 
+        self.model = QStandardItemModel()
+        self.ui.listViewTaskList.setModel(self.model)
+        self.model.dataChanged.connect(self._q_model_data_changed)
+
         self.setWindowTitle(QApplication.applicationName())
+
+    def _q_model_item_changed(self, item):
+        path = item.data(Qt.ItemDataRole.UserRole + 1)
+        status = item.data(Qt.ItemDataRole.UserRole + 2)
+        text = QFileInfo(path).fileName() + _work_status_string.get(status, "")
+        item.setText(text)
+
+    def _q_model_data_changed(self, topLeft, bottomRight, roles):
+        for role in roles:
+            if role != Qt.ItemDataRole.UserRole + 2:
+                continue
+            for row in range(topLeft.row(), bottomRight.row() + 1):
+                for column in range(topLeft.column(), bottomRight.column() + 1):
+                    item = topLeft.model().item(row, column)
+                    self._q_model_item_changed(item)
 
     def _q_browse_output_dir(self):
         path = QFileDialog.getExistingDirectory(
@@ -125,19 +143,19 @@ class MainWindow(QMainWindow):
         paths, _ = QFileDialog.getOpenFileNames(
             self, 'Select Audio Files', ".", 'Wave Files (*.wav)')
         for path in paths:
-            item = QListWidgetItem()
+            item = QStandardItem()# QListWidgetItem()
             item.setText(QFileInfo(path).fileName())
             # Save full path at custom role
-            item.setData(Qt.ItemDataRole.UserRole + 1, path)
-            item.setData(Qt.ItemDataRole.UserRole + 2, WorkStatus.NEW)
-            self.ui.listWidgetTaskList.addItem(item)
+            item.setData(path, Qt.ItemDataRole.UserRole + 1)
+            item.setData(WorkStatus.NEW, Qt.ItemDataRole.UserRole + 2)
+            self.model.appendRow(item)
 
     def _q_clear_audio_list(self):
         if self.processing:
             self.warningProcessNotFinished()
             return
 
-        self.ui.listWidgetTaskList.clear()
+        self.model.clear()
 
     def _q_about(self):
         QMessageBox.information(self, "About", "OpenVPI Team")
@@ -162,7 +180,7 @@ class MainWindow(QMainWindow):
             self.warningProcessNotFinished()
             return
 
-        item_count = self.ui.listWidgetTaskList.count()
+        item_count = self.model.rowCount()
 
         if item_count == 0:
             return
@@ -176,10 +194,9 @@ class MainWindow(QMainWindow):
         self.processing = True
 
         self.threadpool = QThreadPool()
-        print("Multithreading with maximum {} threads".format(self.threadpool.maxThreadCount()))
 
         for i in range(0, item_count):
-            item = self.ui.listWidgetTaskList.item(i)
+            item = self.model.item(i)
             path = item.data(Qt.ItemDataRole.UserRole + 1)  # Get full path
 
             worker = Worker(filename=path,
@@ -194,8 +211,8 @@ class MainWindow(QMainWindow):
             worker.signals.finishedWithArgs.connect(self._q_threadFinished)
 
             status = WorkStatus.PENDING
-            item.setData(Qt.ItemDataRole.UserRole + 2, status)
-            item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
+            item.setData(status, Qt.ItemDataRole.UserRole + 2)
+            #item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
             #worker.start()
             try:
                 max_threads = int(self.ui.lineEditThreads.text())
@@ -211,20 +228,20 @@ class MainWindow(QMainWindow):
             #self.workers.append(worker)  # Collect in case of auto deletion
 
     def _q_threadStartProcessing(self, jobid):
-        item = self.ui.listWidgetTaskList.item(jobid)
+        item = self.model.item(jobid)
         status = WorkStatus.PROCESSING
-        item.setData(Qt.ItemDataRole.UserRole + 2, status)
-        item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
+        item.setData(status, Qt.ItemDataRole.UserRole + 2)
+        #item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
 
     def _q_threadFinished(self, jobid=-1):
         self.workFinished += 1
         self.ui.progressBar.setValue(self.workFinished)
         if jobid >= 0:
-            currentItem = self.ui.listWidgetTaskList.item(jobid)
-            currentItem.setData(Qt.ItemDataRole.UserRole + 2, WorkStatus.FINISHED)
-            currentItem.setText(
-                QFileInfo(currentItem.data(Qt.ItemDataRole.UserRole + 1)).fileName() +
-                            WorkStatus.suffix(WorkStatus.FINISHED))
+            currentItem = self.model.item(jobid)
+            currentItem.setData(WorkStatus.FINISHED, Qt.ItemDataRole.UserRole + 2)
+            #currentItem.setText(
+            #    QFileInfo(currentItem.data(Qt.ItemDataRole.UserRole + 1)).fileName() +
+            #                WorkStatus.suffix(WorkStatus.FINISHED))
 
         if self.workFinished == self.workCount:
             # Join all workers
