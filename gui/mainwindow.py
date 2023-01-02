@@ -112,6 +112,8 @@ class MainWindow(QMainWindow):
         self.ui.listViewTaskList.setModel(self.model)
         self.model.dataChanged.connect(self._q_model_data_changed)
 
+        self.threadpool = QThreadPool()
+
         self.setWindowTitle(QApplication.applicationName())
 
     def _q_model_item_changed(self, item):
@@ -193,7 +195,13 @@ class MainWindow(QMainWindow):
         self.workFinished = 0
         self.processing = True
 
-        self.threadpool = QThreadPool()
+        try:
+            max_threads = int(self.ui.lineEditThreads.text())
+            if max_threads < 1:
+                raise ValueError("Number of threads must be a positive integer.")
+        except ValueError:
+            max_threads = QThread.idealThreadCount()
+            self.ui.lineEditThreads.setText(str(max_threads))
 
         for i in range(0, item_count):
             item = self.model.item(i)
@@ -214,13 +222,6 @@ class MainWindow(QMainWindow):
             item.setData(status, Qt.ItemDataRole.UserRole + 2)
             #item.setText(QFileInfo(item.data(Qt.ItemDataRole.UserRole + 1)).fileName() + WorkStatus.suffix(status))
             #worker.start()
-            try:
-                max_threads = int(self.ui.lineEditThreads.text())
-                if max_threads < 1:
-                    raise ValueError("Number of threads must be a positive integer.")
-            except ValueError:
-                max_threads = QThread.idealThreadCount()
-                self.ui.lineEditThreads.setText(str(max_threads))
 
             self.threadpool.setMaxThreadCount(max_threads)
             self.threadpool.start(worker)
